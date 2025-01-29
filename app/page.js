@@ -53,16 +53,7 @@ export default function Home() {
     const data = presentations.find((p) => p.id === presentationId);
     if (!data) return;
 
-    const wasOwner = data.createdBy === nickname;
-    const noOwner = !data.users.some((user) => user.role === "owner");
-
-    const assignedRole = wasOwner || noOwner ? "owner" : role;
-
-    const success = await joinPresentation(
-      presentationId,
-      nickname,
-      assignedRole
-    );
+    const success = await joinPresentation(presentationId, nickname, role);
     if (success) {
       router.push(`/presentation/${presentationId}`);
     }
@@ -72,10 +63,11 @@ export default function Home() {
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
       <h1 className="text-3xl font-bold mb-4">Collaborative Presentation</h1>
 
+      {/* Nickname Input */}
       <input
         type="text"
         placeholder="Enter your nickname"
-        className="p-2 border rounded mb-4"
+        className="p-2 border rounded mb-4 w-64"
         value={nickname}
         onChange={(e) => setNickname(e.target.value)}
       />
@@ -85,13 +77,13 @@ export default function Home() {
         <input
           type="text"
           placeholder="Enter presentation title"
-          className="p-2 border rounded mb-2"
+          className="p-2 border rounded mb-2 w-64"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
         <button
           onClick={handleCreatePresentation}
-          className="bg-green-500 text-white p-2 rounded"
+          className="bg-green-500 text-white p-2 rounded w-64"
         >
           Create Presentation
         </button>
@@ -100,7 +92,7 @@ export default function Home() {
       {/* List of Presentations */}
       <ul className="w-full max-w-md">
         {presentations.map((presentation) => {
-          const isOwner = presentation.createdBy === nickname;
+          const isOwner = nickname && presentation.createdBy === nickname;
 
           return (
             <li
