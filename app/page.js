@@ -7,7 +7,6 @@ import {
   createPresentation,
 } from "../lib/presentation";
 
-
 export default function Home() {
   const [presentations, setPresentations] = useState([]);
   const [nickname, setNickname] = useState("");
@@ -100,30 +99,45 @@ export default function Home() {
 
       {/* List of Presentations */}
       <ul className="w-full max-w-md">
-        {presentations.map((presentation) => (
-          <li
-            key={presentation.id}
-            className="p-3 border-b flex justify-between items-center"
-          >
-            <span className="font-semibold">{presentation.title}</span>
+        {presentations.map((presentation) => {
+          const isOwner = presentation.createdBy === nickname;
 
-            <div className="space-x-2">
-              <button
-                onClick={() => handleJoin(presentation.id, "viewer")}
-                className="bg-gray-400 text-white p-2 rounded"
-              >
-                View
-              </button>
+          return (
+            <li
+              key={presentation.id}
+              className="p-3 border-b flex justify-between items-center"
+            >
+              <span className="font-semibold">{presentation.title}</span>
 
-              <button
-                onClick={() => handleJoin(presentation.id, "editor")}
-                className="bg-blue-500 text-white p-2 rounded"
-              >
-                Join as Editor
-              </button>
-            </div>
-          </li>
-        ))}
+              <div className="space-x-2">
+                {isOwner ? (
+                  <button
+                    onClick={() => handleJoin(presentation.id, "owner")}
+                    className="bg-blue-500 text-white p-2 rounded"
+                  >
+                    Edit
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => handleJoin(presentation.id, "viewer")}
+                      className="bg-gray-400 text-white p-2 rounded"
+                    >
+                      View
+                    </button>
+
+                    <button
+                      onClick={() => handleJoin(presentation.id, "editor")}
+                      className="bg-blue-500 text-white p-2 rounded"
+                    >
+                      Join as Editor
+                    </button>
+                  </>
+                )}
+              </div>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
