@@ -2,9 +2,15 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter, usePathname } from "next/navigation";
 import { db } from "@/lib/firebase";
-import { doc, getDoc, onSnapshot } from "firebase/firestore";
-import { joinPresentation, leavePresentation } from "@/lib/firestore";
-import SlideEditor from "@/app/components/SlideEditor";
+import { doc, onSnapshot } from "firebase/firestore";
+import { joinPresentation, leavePresentation } from "@/lib/presentation";
+import SlidePanel from "@/app/components/SlidePanel";
+import UserPanel from "@/app/components/UserPanel";
+import TopToolbar from "@/app/components/TopToolBar";
+import SlideCanvas from "@/app/components/SlideCanvas";
+import PresentMode from "@/app/components/PresentMode";
+import { addTextBlock, addShapeBlock, getSlides } from "@/lib/slides";
+import { v4 as uuidv4 } from "uuid";
 
 export default function PresentationPage() {
   const { id } = useParams();
@@ -14,34 +20,34 @@ export default function PresentationPage() {
   const [userRole, setUserRole] = useState("");
   const [users, setUsers] = useState([]);
   const [hasJoined, setHasJoined] = useState(false);
+  const [isPresenting, setIsPresenting] = useState(false);
+  const [activeSlide, setActiveSlide] = useState(null);
+  const [slides, setSlides] = useState([]);
 
   useEffect(() => {
     const userNickname = sessionStorage.getItem("nickname");
-
     if (!userNickname) {
       router.push("/");
       return;
     }
-
     if (!id) return;
 
     const docRef = doc(db, "presentations", id);
-
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         setPresentation(data);
         setUsers(data.users || []);
 
-        // ✅ Ensure correct role is set
         const user = data.users.find((user) => user.userId === userNickname);
         if (user) {
-          console.log("User role found:", user.role); // ✅ Debugging user role
           setUserRole(user.role);
         } else {
-          console.log("No user role found. Defaulting to viewer.");
-          setUserRole("viewer");
+          sessionStorage.removeItem("nickname");
+          router.push("/");
         }
+      } else {
+        router.push("/");
       }
     });
 
@@ -51,7 +57,6 @@ export default function PresentationPage() {
   useEffect(() => {
     const userNickname = sessionStorage.getItem("nickname");
     const userRole = sessionStorage.getItem("userRole");
-
     if (!userNickname) {
       router.push("/");
       return;
@@ -87,50 +92,111 @@ export default function PresentationPage() {
     };
   }, [id, pathname, hasJoined]);
 
+  const removeDuplicates = (slides) => {
+    const uniqueSlides = [];
+    const seenIds = new Set();
+
+    for (const slide of slides) {
+      if (!seenIds.has(slide.id)) {
+        uniqueSlides.push(slide);
+        seenIds.add(slide.id);
+      }
+    }
+    return uniqueSlides;
+  };
+
+  useEffect(() => {
+    if (!id) return;
+    const fetchSlides = async () => {
+      const fetchedSlides = await getSlides(id);
+      setSlides(removeDuplicates(fetchedSlides));
+      if (fetchedSlides.length > 0 && !activeSlide) {
+        setActiveSlide(fetchedSlides[0].id);
+      }
+    };
+    fetchSlides();
+  }, [id]);
+
+  if (!presentation) {
+    return (
+      <div className="flex justify-center items-center h-screen text-lg">
+        Loading presentation...
+      </div>
+    );
+  }
+
+  if (isPresenting) {
+    return (
+      <PresentMode
+        presentation={presentation}
+        slides={slides}
+        onExit={() => setIsPresenting(false)}
+      />
+    );
+  }
+
+  const handleAddText = async () => {
+    if (userRole !== "viewer" && activeSlide) {
+      const newBlock = {
+        id: uuidv4(),
+        type: "text",
+        content: "New Text",
+        position: { x: 50, y: 50 },
+        size: { width: 200, height: 50 },
+      };
+      await addTextBlock(id, activeSlide, newBlock);
+    }
+  };
+
+  const handleAddShape = async (shapeType) => {
+    if (userRole !== "viewer" && activeSlide) {
+      const newBlock = {
+        id: uuidv4(),
+        type: "shape",
+        shape: shapeType,
+        color: "blue",
+        position: { x: 100, y: 100 },
+        size: { width: 100, height: 100 },
+      };
+      await addShapeBlock(id, activeSlide, newBlock);
+    }
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      {presentation ? (
-        <>
-          <h1 className="text-3xl font-bold">{presentation.title}</h1>
-          <p>Created by: {presentation.createdBy}</p>
-          <p className="font-semibold">Your role: {userRole}</p>
+    <div className="flex flex-col h-screen bg-gray-100">
+      {/* Top Toolbar */}
+      <TopToolbar
+        onAddText={handleAddText}
+        onAddShape={handleAddShape}
+        onPresent={() => setIsPresenting(true)}
+        userRole={userRole}
+      />
 
-          {/* 🔹 Active Users List */}
-          <div className="mt-4">
-            <h2 className="text-xl font-semibold">Active Users:</h2>
-            <ul>
-              {users.map((user, index) => (
-                <li key={index} className="text-gray-700">
-                  {user.userId} -{" "}
-                  <span className="text-sm text-gray-500">{user.role}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+      <div className="flex flex-grow flex-wrap overflow-hidden">
+        {/* Slide Panel (Left Sidebar) */}
+        <div className="w-full md:w-1/5 min-w-[220px]">
+          <SlidePanel
+            presentationId={id}
+            setActiveSlide={setActiveSlide}
+            activeSlide={activeSlide}
+            userRole={userRole}
+          />
+        </div>
 
-          {/* 🔹 Slide Editor Component (Placed Below Users List) */}
-          <div className="w-full mt-6">
-            <SlideEditor presentationId={id} userRole={userRole} />
-          </div>
+        {/* Slide Canvas (Main Editing Area) */}
+        <div className="flex-1 flex justify-center items-center p-2 min-w-[300px]">
+          <SlideCanvas
+            presentationId={id}
+            slideId={activeSlide}
+            userRole={userRole}
+          />
+        </div>
 
-          {/* 🔹 Role-Based Messages */}
-          {userRole === "viewer" ? (
-            <p className="mt-4 text-gray-600">
-              You are in viewer mode. You cannot edit.
-            </p>
-          ) : userRole === "owner" ? (
-            <p className="mt-4 text-green-600 font-bold">
-              You are the owner. You have full control.
-            </p>
-          ) : (
-            <p className="mt-4 text-gray-600">
-              You are an editor. Editing features will be added.
-            </p>
-          )}
-        </>
-      ) : (
-        <p>Loading presentation...</p>
-      )}
+        {/* User Panel (Right Sidebar) */}
+        <div className="w-full md:w-1/5 min-w-[200px]">
+          <UserPanel users={users} presentationId={id} userRole={userRole} />
+        </div>
+      </div>
     </div>
   );
 }

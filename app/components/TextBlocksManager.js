@@ -24,7 +24,7 @@ export default function TextBlocksManager({ presentationId, slideId, userRole })
         id: uuidv4(),
         type: "text",
         content: "New Text",
-        position: { x: 100, y: elements.length * 60 }, // ✅ Stagger text positions
+        position: { x: 100, y: elements.length * 60 },
         size: { width: 200, height: 50 },
       };
       await addTextBlock(presentationId, slideId, newBlock);

@@ -2,18 +2,29 @@
 import { useState } from "react";
 import { Rnd } from "react-rnd";
 import { updateTextBlock, removeTextBlock } from "@/lib/slides";
-import Markdown from "react-markdown";
 
-export default function TextBlock({ presentationId, slideId, block, userRole, slideArea }) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [content, setContent] = useState(block.content);
-
+export default function ShapeBlock({
+  presentationId,
+  slideId,
+  block,
+  userRole,
+  slideArea,
+}) {
   const handleDragStop = async (e, d) => {
     if (userRole !== "viewer") {
-      const newX = Math.max(0, Math.min(d.x, slideArea.width - block.size.width));
-      const newY = Math.max(0, Math.min(d.y, slideArea.height - block.size.height));
+      const newX = Math.max(
+        0,
+        Math.min(d.x, slideArea.width - block.size.width)
+      );
+      const newY = Math.max(
+        0,
+        Math.min(d.y, slideArea.height - block.size.height)
+      );
 
-      await updateTextBlock(presentationId, slideId, { ...block, position: { x: newX, y: newY } });
+      await updateTextBlock(presentationId, slideId, {
+        ...block,
+        position: { x: newX, y: newY },
+      });
     }
   };
 
@@ -37,26 +48,15 @@ export default function TextBlock({ presentationId, slideId, block, userRole, sl
       bounds="parent"
       onDragStop={handleDragStop}
       onResizeStop={handleResizeStop}
-      disableDragging={userRole === "viewer"}
       enableResizing={userRole !== "viewer"}
-      className="absolute border p-2 bg-white shadow-md cursor-move"
+      className="absolute cursor-move"
     >
-      {isEditing ? (
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          onBlur={async () => {
-            setIsEditing(false);
-            await updateTextBlock(presentationId, slideId, { ...block, content });
-          }}
-          className="w-full h-full p-2 border-none focus:outline-none"
-          autoFocus
-        />
-      ) : (
-        <div onClick={() => userRole !== "viewer" && setIsEditing(true)}>
-          <Markdown>{content}</Markdown>
-        </div>
-      )}
+      <div
+        className={`w-full h-full ${
+          block.shape === "circle" ? "rounded-full" : ""
+        }`}
+        style={{ backgroundColor: block.color }}
+      ></div>
 
       {userRole !== "viewer" && (
         <button

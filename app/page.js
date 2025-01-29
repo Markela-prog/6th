@@ -5,7 +5,8 @@ import {
   getPresentations,
   joinPresentation,
   createPresentation,
-} from "../lib/firestore";
+} from "../lib/presentation";
+
 
 export default function Home() {
   const [presentations, setPresentations] = useState([]);
@@ -33,7 +34,7 @@ export default function Home() {
       return;
     }
 
-    sessionStorage.setItem("nickname", nickname); // Store user nickname
+    sessionStorage.setItem("nickname", nickname);
 
     const presentationId = await createPresentation(title, nickname);
     if (presentationId) {
@@ -48,9 +49,21 @@ export default function Home() {
       return;
     }
 
-    sessionStorage.setItem("nickname", nickname); // Store user nickname
+    sessionStorage.setItem("nickname", nickname);
 
-    const success = await joinPresentation(presentationId, nickname, role);
+    const data = presentations.find((p) => p.id === presentationId);
+    if (!data) return;
+
+    const wasOwner = data.createdBy === nickname;
+    const noOwner = !data.users.some((user) => user.role === "owner");
+
+    const assignedRole = wasOwner || noOwner ? "owner" : role;
+
+    const success = await joinPresentation(
+      presentationId,
+      nickname,
+      assignedRole
+    );
     if (success) {
       router.push(`/presentation/${presentationId}`);
     }
@@ -68,7 +81,7 @@ export default function Home() {
         onChange={(e) => setNickname(e.target.value)}
       />
 
-      {/* 🔹 Create Presentation Section */}
+      {/* Create Presentation Section */}
       <div className="flex flex-col items-center mb-6">
         <input
           type="text"
@@ -85,7 +98,7 @@ export default function Home() {
         </button>
       </div>
 
-      {/* 🔹 List of Presentations */}
+      {/* List of Presentations */}
       <ul className="w-full max-w-md">
         {presentations.map((presentation) => (
           <li
