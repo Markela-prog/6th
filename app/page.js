@@ -67,7 +67,7 @@ export default function Home() {
       <input
         type="text"
         placeholder="Enter your nickname"
-        className="p-2 border rounded mb-4 w-64"
+        className="p-2 border rounded mb-4 w-64 text-black bg-white placeholder-gray-500"
         value={nickname}
         onChange={(e) => setNickname(e.target.value)}
       />
@@ -77,10 +77,11 @@ export default function Home() {
         <input
           type="text"
           placeholder="Enter presentation title"
-          className="p-2 border rounded mb-2 w-64"
+          className="p-2 border rounded mb-2 w-64 text-black bg-white placeholder-gray-500"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
+
         <button
           onClick={handleCreatePresentation}
           className="bg-green-500 text-white p-2 rounded w-64"
@@ -105,7 +106,7 @@ export default function Home() {
                 {isOwner ? (
                   <button
                     onClick={() => handleJoin(presentation.id, "owner")}
-                    className="bg-blue-500 text-white p-2 rounded"
+                    className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
                   >
                     Edit
                   </button>
