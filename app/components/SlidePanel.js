@@ -77,7 +77,7 @@ const SortableSlideItem = ({
       {/* Editable Title */}
       {userRole !== "viewer" && isEditing ? (
         <input
-          className="flex-1 p-1 border rounded text-black"
+          className="flex-1 p-1 border rounded text-black bg-white placeholder-gray-500 focus:ring focus:ring-blue-300"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onBlur={() => {
@@ -93,7 +93,7 @@ const SortableSlideItem = ({
           autoFocus
         />
       ) : (
-        <span className="flex-1" onDoubleClick={() => setIsEditing(true)}>
+        <span className="flex-1 text-gray-800 font-medium" onDoubleClick={() => setIsEditing(true)}>
           {title}
         </span>
       )}
@@ -201,10 +201,10 @@ export default function SlidePanel({
         slides.map((slide, index) => (
           <button
             key={slide.id}
-            className={`p-2 border w-full rounded-lg ${
+            className={`p-2 border w-full rounded-lg font-medium transition ${
               slide.id === activeSlide
-                ? "bg-blue-500 text-white font-medium"
-                : "bg-gray-100 hover:bg-gray-200"
+                ? "bg-blue-500 text-white shadow-md"
+                : "bg-gray-100 text-gray-800 hover:bg-gray-200"
             } transition`}
             onClick={() => setActiveSlide(slide.id)}
           >

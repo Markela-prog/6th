@@ -39,7 +39,7 @@ export default function TextBlock({ presentationId, slideId, block, userRole, sl
       onResizeStop={handleResizeStop}
       disableDragging={userRole === "viewer"}
       enableResizing={userRole !== "viewer"}
-      className="absolute border p-2 bg-white shadow-md cursor-move"
+      className="absolute border border-gray-300 p-2 bg-white shadow-md rounded-lg cursor-move"
     >
       {isEditing ? (
         <textarea
@@ -49,7 +49,7 @@ export default function TextBlock({ presentationId, slideId, block, userRole, sl
             setIsEditing(false);
             await updateTextBlock(presentationId, slideId, { ...block, content });
           }}
-          className="w-full h-full p-2 border-none focus:outline-none"
+          className="w-full h-full p-2 border border-gray-300 rounded bg-white text-black focus:ring focus:ring-blue-300 focus:outline-none shadow-md"
           autoFocus
         />
       ) : (
